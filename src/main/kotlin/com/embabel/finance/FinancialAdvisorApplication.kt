@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.template
+package com.embabel.finance
 
 import com.embabel.agent.config.annotation.EnableAgentShell
 import com.embabel.agent.config.annotation.EnableAgents
 import com.embabel.agent.config.annotation.LoggingThemes
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
+import org.springframework.context.annotation.ComponentScan
 
 @SpringBootApplication
 @EnableAgentShell
 @EnableAgents(loggingTheme = LoggingThemes.STAR_WARS)
-class ProjectNameApplication
+@ConfigurationPropertiesScan(
+    basePackages = [
+        "com.embabel.finance.agent",
+    ]
+)
+//@ComponentScan("com.embabel.finance.agent")
+class FinancialAdvisorApplication
 
 fun main(args: Array<String>) {
-    runApplication<ProjectNameApplication>(*args)
+    runApplication<FinancialAdvisorApplication>(*args)
 }

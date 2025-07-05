@@ -1,9 +1,11 @@
-package com.embabel.template.agent
+package com.embabel.finance.agent
 
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.testing.unit.FakeOperationContext
 import com.embabel.agent.testing.unit.LlmInvocation
 import com.embabel.agent.testing.unit.UnitTestUtils.captureLlmCall
+import com.embabel.template.agent.Story
+import com.embabel.template.agent.WriteAndReviewAgent
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.Instant

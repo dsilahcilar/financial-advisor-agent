@@ -1,0 +1,23 @@
+spring:
+
+  ai:
+    mcp:
+      client:
+        enabled: true
+        name: embabel
+        version: 1.0.0
+        request-timeout: 30s
+        type: SYNC
+
+        stdio:
+          connections:
+            # MCP server exposed by Docker Desktop MCP Toolkit extension
+            docker-mcp:
+              command: docker
+              args:
+                - run
+                - -i
+                - --rm
+                - alpine/socat
+                - STDIO
+                - TCP:host.docker.internal:8811
