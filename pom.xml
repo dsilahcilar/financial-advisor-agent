@@ -36,6 +36,12 @@
             <version>${embabel-agent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.embabel.example</groupId>
+            <artifactId>examples-common</artifactId>
+            <version>${embabel-agent.version}</version>
+        </dependency>
+
         <!-- Unit and Integration Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,17 +1,20 @@
 package com.embabel.finance.agent
 
-import com.embabel.agent.api.annotation.*
+import com.embabel.agent.api.annotation.AchievesGoal
+import com.embabel.agent.api.annotation.Action
+import com.embabel.agent.api.annotation.Agent
+import com.embabel.agent.api.annotation.using
+import com.embabel.agent.api.annotation.usingModel
 import com.embabel.agent.api.common.create
 import com.embabel.agent.api.common.createObject
-import com.embabel.agent.config.models.OpenAiModels
 import com.embabel.agent.core.CoreToolGroups
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.ResearchReport
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
+import com.embabel.finance.FinanceAnalystProperties
 import org.slf4j.LoggerFactory
-import org.springframework.boot.context.properties.ConfigurationProperties
 
 data class ResearchRequest(
     val ticker: String,
@@ -23,15 +26,6 @@ data class MarketAnalyseReport(
     val researchReport: ResearchReport
 )
 
-@ConfigurationProperties(prefix = "embabel.market-analyst")
-data class MarketAnalystProperties(
-    val reportFileDirectory: String = "/Users/deniz/Downloads",
-    val maxWordCount: Int = 300,
-    val openAiModelName: String = OpenAiModels.GPT_41_MINI,
-    val criticModeName: String = OpenAiModels.GPT_41_NANO,
-    val mergeModelName: String = OpenAiModels.GPT_41_MINI,
-)
-
 @Agent(
     description = """
     Market analyst agent is responsible for conducting a comprehensive, time-sensitive market intelligence analysis 
@@ -39,7 +33,7 @@ data class MarketAnalystProperties(
     recent data and synthesize it into a structured financial report, exclusively based on the retrieved information.
     """
 )
-class MarketAnalyst(private val properties: MarketAnalystProperties) {
+class MarketAnalyst(private val properties: FinanceAnalystProperties) {
 
     private val logger = LoggerFactory.getLogger(MarketAnalyst::class.java)
 

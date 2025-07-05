@@ -21,17 +21,15 @@ import com.embabel.agent.config.annotation.LoggingThemes
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
-import org.springframework.context.annotation.ComponentScan
 
 @SpringBootApplication
 @EnableAgentShell
 @EnableAgents(loggingTheme = LoggingThemes.STAR_WARS)
 @ConfigurationPropertiesScan(
     basePackages = [
-        "com.embabel.finance.agent",
+        "com.embabel.finance",
     ]
 )
-//@ComponentScan("com.embabel.finance.agent")
 class FinancialAdvisorApplication
 
 fun main(args: Array<String>) {
