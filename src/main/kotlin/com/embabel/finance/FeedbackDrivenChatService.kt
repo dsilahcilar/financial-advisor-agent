@@ -7,7 +7,7 @@ import org.jline.terminal.Terminal
 import org.springframework.stereotype.Component
 
 @Component
-class DumbChatService(val terminal: Terminal, val feedBackService: FeedBackService) {
+class FeedbackDrivenChatService(val terminal: Terminal, val feedBackService: FeedBackService) {
 
     private fun promptUser(prompt: String): String {
         val lineReader = LineReaderBuilder.builder()

@@ -9,7 +9,7 @@ import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.finance.Critique
-import com.embabel.finance.DumbChatService
+import com.embabel.finance.FeedbackDrivenChatService
 import com.embabel.finance.FinanceAnalystProperties
 import com.embabel.finance.InvestmentPeriod
 import com.embabel.finance.RiskProfile
@@ -35,7 +35,7 @@ private const val RISK_PROFILE_PROMPT = """
 """)
 class TradingAnalyst(
     private val properties: FinanceAnalystProperties,
-    private val chatService: DumbChatService,
+    private val chatService: FeedbackDrivenChatService,
     private val tradeReportGenerator: TradeReportGenerator
 ) {
 

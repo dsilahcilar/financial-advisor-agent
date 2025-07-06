@@ -7,7 +7,7 @@ import com.embabel.agent.tools.file.FileTools
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
-import com.embabel.finance.DumbChatService
+import com.embabel.finance.FeedbackDrivenChatService
 import com.embabel.finance.FinanceAnalystProperties
 import com.embabel.finance.InvestmentPeriod
 import com.embabel.finance.RiskProfile
@@ -32,7 +32,7 @@ data class ExecutionRequest(
 )
 class ExecutionAnalyst(
     var properties: FinanceAnalystProperties,
-    var chatService: DumbChatService
+    var chatService: FeedbackDrivenChatService
 ) {
 
     private val logger = LoggerFactory.getLogger(ExecutionAnalyst::class.java)
