@@ -2,7 +2,9 @@ package com.embabel.finance.agent.trading
 
 import com.embabel.finance.agent.MarketAnalyseReport
 import com.embabel.agent.api.annotation.usingModel
+import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.create
+import com.embabel.common.ai.model.LlmOptions
 import com.embabel.finance.Critique
 import com.embabel.finance.FinanceAnalystProperties
 import org.springframework.stereotype.Component
@@ -28,7 +30,7 @@ class LlmTradeReportGenerator(
         critique: Critique?
     ): TradingReport {
         val prompt = buildReportPrompt(report, riskProfile, investmentPeriod, critique)
-        return usingModel(properties.openAiModelName).create(prompt)
+        return usingModel(properties.reportModel).create(prompt)
     }
 
     private fun buildReportPrompt(

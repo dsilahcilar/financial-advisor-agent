@@ -6,20 +6,20 @@ import com.embabel.agent.api.annotation.Agent
 import com.embabel.agent.api.annotation.RequireNameMatch
 import com.embabel.agent.api.annotation.using
 import com.embabel.agent.api.annotation.usingModel
+import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.create
 import com.embabel.agent.api.common.createObject
 import com.embabel.agent.core.CoreToolGroups
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.ResearchReport
-import com.embabel.agent.tools.file.FileTools
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
+import com.embabel.common.core.types.HasInfoString
 import com.embabel.finance.FinanceAnalystProperties
+import com.embabel.finance.ReportService
 import org.slf4j.LoggerFactory
-import java.time.Instant
 import java.time.LocalDate
-import java.util.Date
 
 data class ResearchRequest(
     val ticker: String,
@@ -29,7 +29,11 @@ data class ResearchRequest(
 
 data class MarketAnalyseReport(
     val researchReport: ResearchReport
-)
+) : HasInfoString {
+    override fun infoString(verbose: Boolean?): String {
+        return researchReport.toString()
+    }
+}
 
 @Agent(
     description = """
@@ -38,7 +42,10 @@ data class MarketAnalyseReport(
     recent data and synthesize it into a structured financial report, exclusively based on the retrieved information.
     """
 )
-class MarketAnalyst(private val properties: FinanceAnalystProperties) {
+class MarketAnalyst(
+    private val properties: FinanceAnalystProperties,
+    private val reportService: ReportService
+) {
 
     private val logger = LoggerFactory.getLogger(MarketAnalyst::class.java)
 
@@ -53,24 +60,13 @@ class MarketAnalyst(private val properties: FinanceAnalystProperties) {
         ).createObject("Create a ResearchRequest from this user input, extracting ticker and maxDataAgeDate: $userInput\"")
 
 
-    //    @AchievesGoal(
-//        description = """
-//            To generate a comprehensive and timely market analysis report for a provided_ticker.
-//            This involves iteratively using the Brave Search tool to gather a target number of distinct,
-//            recent (within a specified timeframe), and insightful pieces of information.
-//            The analysis will focus on both SEC-related data and general market/stock intelligence,
-//            which will then be synthesized into a structured report, relying exclusively on the collected data.
-//             """,
-//        tags = ["market analysis", "stock"],
-//        examples = ["Market analyse for <x> stock"]
-//    )
     @Action(
         toolGroups = [CoreToolGroups.WEB, CoreToolGroups.BROWSER_AUTOMATION]
     )
-    fun searchWithGpt4(
+    fun searchWithTools(
         researchRequest: ResearchRequest
     ): MarketAnalyseReport = usingModel(
-        model = properties.openAiModelName,
+        model = properties.researchModel,
     ).create(
         """
             Overall Goal: To generate a comprehensive and timely market analysis report for a provided_ticker. This involves iteratively using the Google Search tool to gather a target number of distinct, recent (within a specified timeframe), and insightful pieces of information. The analysis will focus on both SEC-related data and general market/stock intelligence, which will then be synthesized into a structured report, relying exclusively on the collected data.
@@ -151,26 +147,9 @@ class MarketAnalyst(private val properties: FinanceAnalystProperties) {
 
     @Action(outputBinding = MARKET_ANALYSE_REPORT_MD_BINDING)
     fun generateReadableMarkdown(
-        marketAnalyseReport: MarketAnalyseReport
-    ): String = using(
-        llm = LlmOptions(byRole(CHEAPEST_ROLE))
-    ).create(
-        """
-                 Convert this structured market analysis report into a well-formatted, human-readable markdown document.
-                 
-                 Report to format: ${marketAnalyseReport.researchReport}
-                 
-                 Requirements:
-                 - Use proper markdown formatting with headers, bullet points, and emphasis
-                 - Make it easy to scan and read
-                 - Maintain all the important information but present it in a more accessible way
-                 - Use clear section headers and logical flow
-                 - Format any tables or lists nicely
-                 - Keep technical details but explain them clearly
-                 
-                 Return only the formatted markdown content, no additional commentary.
-                 """.trimIndent()
-    )
+        marketAnalyseReport: MarketAnalyseReport,
+        context: OperationContext
+    ): String = reportService.generateMarkdownReport(marketAnalyseReport, context)
 
     @AchievesGoal(
         description = """
@@ -188,16 +167,10 @@ class MarketAnalyst(private val properties: FinanceAnalystProperties) {
         @RequireNameMatch
         marketAnalyseMarkDownReport: String,
         researchRequest: ResearchRequest,
-    ): Boolean {
-        val file = FileTools.readWrite(properties.reportFileDirectory)
-        file.exists().let {
-            file.createFile(
-                "${researchRequest.ticker}-marketReport-${LocalDate.now()}.md",
-                marketAnalyseMarkDownReport
-            )
-        }
-        return true
-    }
+    ) = reportService.saveReport(
+            marketAnalyseMarkDownReport,
+            "${researchRequest.ticker}-marketReport-${LocalDate.now()}.md"
+    )
 
     companion object {
         const val MARKET_ANALYSE_REPORT_BINDING = "marketAnalyseReport"

@@ -3,14 +3,8 @@ package com.embabel.finance.agent.execution
 import com.embabel.agent.api.annotation.*
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.create
-import com.embabel.agent.tools.file.FileTools
 import com.embabel.common.ai.model.LlmOptions
-import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
-import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
-import com.embabel.finance.FeedbackDrivenChatService
-import com.embabel.finance.FinanceAnalystProperties
-import com.embabel.finance.InvestmentPeriod
-import com.embabel.finance.RiskProfile
+import com.embabel.finance.*
 import com.embabel.finance.agent.trading.Strategy
 import com.embabel.finance.agent.trading.TradingReport
 import org.slf4j.LoggerFactory
@@ -31,8 +25,9 @@ data class ExecutionRequest(
    """
 )
 class ExecutionAnalyst(
-    var properties: FinanceAnalystProperties,
-    var chatService: FeedbackDrivenChatService
+    private var properties: FinanceAnalystProperties,
+    private var chatService: FeedbackDrivenChatService,
+    private val reportService: ReportService
 ) {
 
     private val logger = LoggerFactory.getLogger(ExecutionAnalyst::class.java)
@@ -64,7 +59,7 @@ class ExecutionAnalyst(
         val selectedStrategy = chatService.promptUser(
             initialPrompt,
             context,
-            LlmOptions(properties.openAiModelName)
+            LlmOptions(properties.criticModel)
         )
         return tradingReport.strategies.find { it.name == strategyMap[selectedStrategy.toInt()] }
     }
@@ -86,7 +81,7 @@ class ExecutionAnalyst(
 
     @Action
     fun generateExecutionStrategy(request: ExecutionRequest): StrategyExecutionPlan = using(
-        llm = LlmOptions(byRole(CHEAPEST_ROLE))
+        llm = LlmOptions(properties.reportModel)
     ).create(
         """
         Generate a comprehensive and reasoned execution plan tailored to the user's input.
@@ -113,48 +108,20 @@ class ExecutionAnalyst(
 
     @Action(outputBinding = EXECUTION_PLAN_MD_BINDING)
     fun generateReadableMarkdown(
-        executionPlan: StrategyExecutionPlan
-    ): String = using(
-        llm = LlmOptions(byRole(CHEAPEST_ROLE))
-    ).create(
-        """
-                 Convert this structured execution plan into a well-formatted, human-readable markdown document.
-                 
-                 Execution Plan to format: ${executionPlan.infoString(true)}
-                 
-                 Requirements:
-                 - Use proper markdown formatting with headers, bullet points, and emphasis
-                 - Make it easy to scan and read
-                 - Maintain all the important information but present it in a more accessible way
-                 - Use clear section headers and logical flow
-                 - Format any tables or lists nicely
-                 - Keep technical details but explain them clearly
-                 - Create separate sections for each execution strategy component
-                 - Include actionable steps and clear guidance
-                 
-                 Return only the formatted markdown content, no additional commentary.
-                 """.trimIndent()
-    )
+        executionPlan: StrategyExecutionPlan,
+        context: OperationContext
+    ): String = reportService.generateMarkdownReport(executionPlan, context)
 
 
     @AchievesGoal(
         description = "Generate execution report for the selected trading strategy, incorporating user risk profile and investment period.",
     )
     @Action
-    fun acceptStrategy(
+    fun saveReport(
         @RequireNameMatch
         executionPlanMarkdownReport: String,
-        executionPlan: StrategyExecutionPlan,
-    ): Boolean {
-        val file = FileTools.readWrite(properties.reportFileDirectory)
-        file.exists().let {
-            file.createFile(
-                "execution-plan-${LocalDate.now()}.md",
-                executionPlanMarkdownReport
-            )
-        }
-        return true
-    }
+    ) = reportService.saveReport(executionPlanMarkdownReport, "execution-plan-${LocalDate.now()}.md")
+
 
     companion object {
         object ReportStates {
@@ -164,7 +131,7 @@ class ExecutionAnalyst(
         object OutputBindings {
             const val STRATEGY_PLAN = "executionStrategyReport"
         }
-        
+
         const val EXECUTION_PLAN_MD_BINDING = "executionPlanMarkdownReport"
     }
 

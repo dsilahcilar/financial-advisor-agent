@@ -3,16 +3,9 @@ package com.embabel.finance.agent.trading
 import com.embabel.agent.api.annotation.*
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.create
-import com.embabel.agent.tools.file.FileTools
 import com.embabel.common.ai.model.LlmOptions
-import com.embabel.common.ai.model.ModelProvider.Companion.CHEAPEST_ROLE
-import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
 import com.embabel.common.core.types.HasInfoString
-import com.embabel.finance.Critique
-import com.embabel.finance.FeedbackDrivenChatService
-import com.embabel.finance.FinanceAnalystProperties
-import com.embabel.finance.InvestmentPeriod
-import com.embabel.finance.RiskProfile
+import com.embabel.finance.*
 import com.embabel.finance.agent.MarketAnalyseReport
 import com.fasterxml.jackson.annotation.JsonClassDescription
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
@@ -28,15 +21,18 @@ private const val RISK_PROFILE_PROMPT = """
     For example, are you 'conservative' (prioritize capital preservation, lower returns), 'moderate' (balanced approach), or 'aggressive' (willing to take on higher risk for potentially higher returns)?
 """
 
-@Agent(description = """
+@Agent(
+    description = """
     Trading Analyst agent to develop tailored trading strategies for users based on their risk appetite, 
     investment timeframe, and relevant market research. The agent guides users through defining their investment profile, 
     conducts AI-assisted market research, and generates multi-strategy investment reports aligned with user preferences.
-""")
+"""
+)
 class TradingAnalyst(
     private val properties: FinanceAnalystProperties,
     private val chatService: FeedbackDrivenChatService,
-    private val tradeReportGenerator: TradeReportGenerator
+    private val tradeReportGenerator: TradeReportGenerator,
+    private val reportService: ReportService
 ) {
 
     private val logger = LoggerFactory.getLogger(TradingAnalyst::class.java)
@@ -50,7 +46,7 @@ class TradingAnalyst(
         val riskProfile = chatService.promptUser(
             RISK_PROFILE_PROMPT.trimIndent(),
             context,
-            LlmOptions(properties.openAiModelName)
+            LlmOptions(properties.researchModel)
         )
         return RiskProfile(riskProfile)
     }
@@ -65,7 +61,7 @@ class TradingAnalyst(
                 .promptUser(
                     INVESTMENT_TIMEFRAME_PROMPT,
                     context,
-                    LlmOptions(properties.openAiModelName)
+                    LlmOptions(properties.researchModel)
                 )
         )
 
@@ -101,7 +97,7 @@ class TradingAnalyst(
     @Action(post = [ReportStates.SATISFACTORY_TRADING_REPORT], canRerun = true)
     fun evaluateReport(
         tradingReport: TradingReport
-    ): Critique = using(LlmOptions(properties.criticModeName)).create(
+    ): Critique = using(LlmOptions(properties.criticModel)).create(
         """
             Is this research report satisfactory? Consider the following question:
             ** Content: A collection containing five or more detailed potential trading strategies.
@@ -142,45 +138,19 @@ class TradingAnalyst(
 
     @Action(outputBinding = TRADING_REPORT_MD_BINDING)
     fun generateReadableMarkdown(
-        tradingReport: TradingReport
-    ): String = using(
-        llm = LlmOptions(byRole(CHEAPEST_ROLE))
-    ).create(
-        """
-                 Convert this structured trading report into a well-formatted, human-readable markdown document.
-                 
-                 Report to format: ${tradingReport.infoString(true)}
-                 
-                 Requirements:
-                 - Use proper markdown formatting with headers, bullet points, and emphasis
-                 - Make it easy to scan and read
-                 - Maintain all the important information but present it in a more accessible way
-                 - Use clear section headers and logical flow
-                 - Format any tables or lists nicely
-                 - Keep technical details but explain them clearly
-                 - Create a separate section for each trading strategy
-                 
-                 Return only the formatted markdown content, no additional commentary.
-                 """.trimIndent()
-    )
+        tradingReport: TradingReport,
+        context: OperationContext
+    ): String = reportService.generateMarkdownReport(tradingReport, context)
 
     @AchievesGoal(
         description = "Generate Trading report",
     )
     @Action
-    fun acceptReport(
+    fun saveReport(
         @RequireNameMatch
         tradingMarkdownReport: String,
-    ): Boolean {
-        val file = FileTools.readWrite(properties.reportFileDirectory)
-        file.exists().let {
-            file.createFile(
-                "trading-report-${LocalDate.now()}.md",
-                tradingMarkdownReport
-            )
-        }
-        return true
-    }
+    ) = reportService.saveReport(tradingMarkdownReport, "trading-report-${LocalDate.now()}.md")
+
 
     companion object {
         object ReportStates {
@@ -193,7 +163,7 @@ class TradingAnalyst(
         object OutputBindings {
             const val TRADING_REPORT = "tradingReport"
         }
-        
+
         const val TRADING_REPORT_MD_BINDING = "tradingMarkdownReport"
     }
 
