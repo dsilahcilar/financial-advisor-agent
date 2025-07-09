@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
-export AGENT_APPLICATION=..
+export AGENT_APPLICATION=$(dirname "$0")/..
+export SPRING_PROFILES_ACTIVE=shell,starwars,docker-desktop
 
-./support/agent.sh
+$(dirname "$0")/support/agent.sh
