@@ -45,10 +45,22 @@ This will start the Spring Boot application and launch the Embabel agent shell.
 Once the shell is running, you can interact with the agent using natural language commands. For example, to start a market analysis for a stock, you could use a command like:
 
 ```
-market analyse for AAPL stock
+x "Generate execution strategy report for nvidia" -o
 ```
 
+Generated report : [nvidia-execution-plan.md](nvidia-execution-plan.md)
+
 The agent will then guide you through the rest of the process, from defining your investment profile to generating a trading plan.
+
+### Running with Ollama
+
+To run the application with Ollama, you can use the following command:
+
+```bash
+mvn -U -f pom.xml -Dspring-boot.run.profiles=ollama -Dmaven.test.skip=true spring-boot:run
+```
+
+This will start the application with the `ollama` profile active, which is configured in the `src/main/resources/application-ollama.properties` file. You may need to update the properties in that file to match your Ollama setup.
 
 ## Technologies Used
 
