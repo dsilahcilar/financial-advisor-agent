@@ -47,6 +47,8 @@ Once the shell is running, you can interact with the agent using natural languag
 ```
 x "Generate execution strategy report for nvidia" -o
 ```
+Screenshots: 
+![agent-logs.jpg](agent-logs.jpg)
 
 Generated report : [nvidia-execution-plan.md](nvidia-execution-plan.md)
 
