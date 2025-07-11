@@ -167,9 +167,9 @@ class MarketAnalyst(
         @RequireNameMatch
         marketAnalyseMarkDownReport: String,
         researchRequest: ResearchRequest,
-    ) = reportService.saveReport(
-            marketAnalyseMarkDownReport,
-            "${researchRequest.ticker}-marketReport-${LocalDate.now()}.md"
+    ): Boolean = reportService.saveReport(
+        marketAnalyseMarkDownReport,
+        "${researchRequest.ticker}-marketReport-${LocalDate.now()}.md"
     )
 
     companion object {

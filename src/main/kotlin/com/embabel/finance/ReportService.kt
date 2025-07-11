@@ -9,8 +9,13 @@ import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
 import com.embabel.common.core.types.HasInfoString
 import org.springframework.stereotype.Component
 
+import org.slf4j.LoggerFactory
+import java.io.IOException
+
 @Component
 class ReportService(private val properties: FinanceAnalystProperties) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun generateMarkdownReport(reportData: HasInfoString, context: OperationContext): String {
         return context.promptRunner(llm = LlmOptions(byRole(ModelProvider.CHEAPEST_ROLE))).create(
@@ -33,11 +38,16 @@ class ReportService(private val properties: FinanceAnalystProperties) {
     }
 
     fun saveReport(reportContent: String, fileName: String): Boolean {
-        val file = FileTools.readWrite(properties.reportFileDirectory)
-        if (!file.exists()) {
-            file.createDirectory(fileName)
+        return try {
+            val file = FileTools.readWrite(properties.reportFileDirectory)
+            if (!file.exists()) {
+                file.createDirectory(fileName)
+            }
+            file.createFile(fileName, reportContent)
+            true
+        } catch (e: IOException) {
+            logger.error("Error saving report to $fileName in ${properties.reportFileDirectory}", e)
+            false
         }
-        file.createFile(fileName, reportContent)
-        return true
     }
 }
