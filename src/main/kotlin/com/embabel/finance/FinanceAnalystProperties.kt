@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "embabel.finance-analyst")
 data class FinanceAnalystProperties(
     val reportFileDirectory: String = "/Users/deniz/Downloads",
-    val maxWordCount: Int = 300,
+    val maxWordCount: Int = 3000,
     // Use a powerful model for the core research and analysis tasks, as it requires strong reasoning and synthesis capabilities.
     val researchModel: String = OpenAiModels.GPT_41,
     // A smaller, faster, and more cost-effective model is suitable for critique and evaluation tasks.

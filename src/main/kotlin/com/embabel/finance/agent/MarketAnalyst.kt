@@ -20,6 +20,7 @@ import com.embabel.finance.FinanceAnalystProperties
 import com.embabel.finance.ReportService
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class ResearchRequest(
     val ticker: String,
@@ -169,7 +170,7 @@ class MarketAnalyst(
         researchRequest: ResearchRequest,
     ): Boolean = reportService.saveReport(
         marketAnalyseMarkDownReport,
-        "${researchRequest.ticker}-marketReport-${LocalDate.now()}.md"
+        "${researchRequest.ticker}-marketReport-${LocalDate.now()}-${LocalDateTime.now()}.md"
     )
 
     companion object {

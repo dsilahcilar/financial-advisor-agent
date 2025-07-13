@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 private const val INVESTMENT_TIMEFRAME_PROMPT =
     "What is your intended investment timeframe for these potential strategies? For instance, \n" +
@@ -149,7 +150,10 @@ class TradingAnalyst(
     fun saveReport(
         @RequireNameMatch
         tradingMarkdownReport: String,
-    ) = reportService.saveReport(tradingMarkdownReport, "trading-report-${LocalDate.now()}.md")
+    ): Boolean = reportService.saveReport(
+        tradingMarkdownReport,
+        "trading-report-${LocalDate.now()}-${LocalDateTime.now()}.md"
+    )
 
 
     companion object {

@@ -9,6 +9,7 @@ import com.embabel.finance.agent.trading.Strategy
 import com.embabel.finance.agent.trading.TradingReport
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class ExecutionRequest(
     val tradingStrategy: Strategy,
@@ -120,7 +121,10 @@ class ExecutionAnalyst(
     fun saveReport(
         @RequireNameMatch
         executionPlanMarkdownReport: String,
-    ) = reportService.saveReport(executionPlanMarkdownReport, "execution-plan-${LocalDate.now()}.md")
+    ): Boolean = reportService.saveReport(
+        executionPlanMarkdownReport,
+        "execution-plan-${LocalDate.now()}-${LocalDateTime.now()}.md"
+    )
 
 
     companion object {
